@@ -1,0 +1,13 @@
+{
+  "name": "savefile.js",
+  "version": "0.0.0",
+  "type": "module",
+  "author": "GameRoMan",
+  "license": "MIT",
+  "scripts": {
+    "npm:publish": "bun publish"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
