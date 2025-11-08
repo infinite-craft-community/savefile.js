@@ -5,9 +5,23 @@
   "author": "GameRoMan",
   "license": "MIT",
   "scripts": {
+    "build": "bunx --bun tsdown",
     "npm:publish": "bun publish"
   },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
   "devDependencies": {
+    "tsdown": "^0.16.1",
     "typescript": "^5.9.3"
+  },
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
   }
 }
