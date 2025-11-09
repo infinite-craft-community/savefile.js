@@ -6,6 +6,7 @@
   "license": "MIT",
   "scripts": {
     "build": "bunx --bun tsdown",
+    "test": "bun test",
     "npm:publish": "bun publish"
   },
   "files": [

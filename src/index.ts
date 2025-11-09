@@ -1,10 +1,13 @@
+type ICElementRecipe = { a: ICElement; b: ICElement };
+type ICElementUse = { other: ICElement; result: ICElement };
+
 type ICElement = {
   id: number;
   text: string;
   emoji: string;
   discovery: boolean;
-  recipes: { a: ICElement; b: ICElement }[];
-  uses: { other: ICElement; result: ICElement }[];
+  recipes: ICElementRecipe[];
+  uses: ICElementUse[];
 };
 
 const DEFAULT_EMOJI = "⬜";
@@ -294,7 +297,7 @@ class Savefile {
     this.type = "binaryV1";
 
     const elementCount = decodeLEB128(read);
-    const recipes = new Map<number, unknown>();
+    const recipes = new Map<number, [number, number][]>();
 
     for (let id = 0; id < elementCount; id++) {
       const text = decodeString(read);
@@ -302,7 +305,7 @@ class Savefile {
       const flags = read();
       const isDiscovery = flags > 127;
 
-      const element = {
+      const element: ICElement = {
         id,
         text,
         emoji: emojiId,
@@ -320,7 +323,7 @@ class Savefile {
       if (recipeCount >= 127) recipeCount += decodeLEB128(read);
       if (isDiscovery) this.stats.discoveries++;
 
-      const list = [];
+      const list: [number, number][] = [];
       recipes.set(id, list);
 
       for (let i = 0; i < recipeCount; i++) {
@@ -333,8 +336,9 @@ class Savefile {
     const emojis = new Map();
     const emojiCount = decodeLEB128(read);
     for (let i = 0; i < emojiCount; i++) emojis.set(i, decodeString(read));
-    for (const element of this.elements)
+    for (const element of this.elements) {
       element.emoji = emojis.get(element.emoji) || DEFAULT_EMOJI;
+    }
 
     for (const [element, list] of recipes) {
       const result = this.elements[element];
@@ -342,15 +346,15 @@ class Savefile {
 
       const pairs = new Set();
       for (const recipe of list) {
-        const a = this.elements[recipe[0]],
-          b = this.elements[recipe[1]];
+        const a = this.elements[recipe[0]];
+        const b = this.elements[recipe[1]];
         if (!a || !b) continue;
 
         const pairId = pair2int(a.id, b.id);
         if (pairs.has(pairId)) continue;
         pairs.add(pairId);
 
-        const pair = { a, b };
+        const pair = { a, b } as const;
         result.recipes.push(pair);
         this.stats.recipes++;
 
@@ -383,11 +387,12 @@ class Savefile {
 
     for (const text in data.recipes) {
       const recipes = data.recipes[text];
-      if (!Array.isArray(recipes) || recipes.length < 1 || text == "Nothing")
+      if (!Array.isArray(recipes) || recipes.length < 1 || text == "Nothing") {
         continue;
+      }
 
       const result = this.addElement(text);
-      const pairs = new Set();
+      const pairs = new Set<bigint>();
 
       for (const [itemA, itemB] of recipes) {
         if (itemA.text == "Nothing" || itemB.text == "Nothing") continue;
@@ -451,7 +456,7 @@ class Savefile {
     encodeLEB128(this.elements.length, out);
     for (const element of this.elements) {
       encodeString(element.text, out);
-      encodeLEB128(emojis.get(element.emoji), out);
+      encodeLEB128(emojis.get(element.emoji)!, out);
 
       out.push(element.discovery * 128 + Math.min(element.recipes.length, 127));
       if (element.recipes.length >= 127) {
@@ -506,6 +511,7 @@ class Savefile {
 
 type ICSavefile = InstanceType<typeof Savefile>;
 
+export { Savefile, getSaveFileType };
 export const ICF = { Savefile, getSaveFileType } as const;
 export default ICF;
-export type { ICSavefile };
+export type { ICSavefile, ICElement, ICElementRecipe, ICElementUse };
