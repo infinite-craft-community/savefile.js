@@ -256,7 +256,7 @@ class Savefile {
     }
 
     for (const item of data.items) {
-      const result = this.elements[item.id];
+      const result = this.elements[item.id]!;
       if (!item.recipes || item.text == "Nothing") continue;
 
       const pairs = new Set<bigint>();
@@ -333,7 +333,7 @@ class Savefile {
       }
     }
 
-    const emojis = new Map();
+    const emojis = new Map<number, string>();
     const emojiCount = decodeLEB128(read);
     for (let i = 0; i < emojiCount; i++) emojis.set(i, decodeString(read));
     for (const element of this.elements) {
@@ -344,7 +344,7 @@ class Savefile {
       const result = this.elements[element];
       if (!result) continue;
 
-      const pairs = new Set();
+      const pairs = new Set<bigint>();
       for (const recipe of list) {
         const a = this.elements[recipe[0]];
         const b = this.elements[recipe[1]];
