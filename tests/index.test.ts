@@ -1,8 +1,6 @@
-import { Savefile } from "~/.";
-
 import { describe, it, expect } from "bun:test";
 
-import "./compression-stream.js";
+import { Savefile } from "~/.";
 
 describe("savefile", () => {
   it("should correctly create an empty savefile", () => {
