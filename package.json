@@ -16,7 +16,7 @@
     "LICENSE"
   ],
   "devDependencies": {
-    "tsdown": "^0.16.4",
+    "tsdown": "^0.17.0",
     "typescript": "^5.9.3"
   },
   "main": "./dist/index.mjs",
