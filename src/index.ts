@@ -25,7 +25,7 @@ function getSaveFileType(raw: Uint8Array) {
 async function compressBuffer(
   buffer: Uint8Array<ArrayBuffer>,
   format: CompressionFormat,
-  compress = true
+  compress = true,
 ): Promise<Uint8Array<ArrayBuffer>> {
   const stream = compress
     ? new CompressionStream(format)
@@ -37,7 +37,7 @@ async function compressBuffer(
 
 function addHeader(
   buffer: Uint8Array<ArrayBuffer>,
-  header: Uint8Array<ArrayBuffer>
+  header: Uint8Array<ArrayBuffer>,
 ): Uint8Array<ArrayBuffer> {
   const merged = new Uint8Array(header.length + buffer.length);
   merged.set(header);
@@ -74,7 +74,7 @@ const encodeString = (str: string, out: number[]): void => {
 
 const decodeString = (read: () => number): string => {
   return new TextDecoder().decode(
-    new Uint8Array(Array.from({ length: read() }, read))
+    new Uint8Array(Array.from({ length: read() }, read)),
   );
 };
 
@@ -93,7 +93,7 @@ const getEmojisSorted = (elements: ICElement[]): Map<string, number> => {
   }
 
   return new Map(
-    [...emojis.entries()].sort((a, b) => b[1] - a[1]).map((x, i) => [x[0], i])
+    [...emojis.entries()].sort((a, b) => b[1] - a[1]).map((x, i) => [x[0], i]),
   );
 };
 
@@ -147,7 +147,7 @@ class Savefile {
 
   static async decode(
     raw: Uint8Array<ArrayBuffer>,
-    options?: ICSaveFileOptions
+    options?: ICSaveFileOptions,
   ): Promise<Savefile | null> {
     const type = getSaveFileType(raw);
 
@@ -180,7 +180,7 @@ class Savefile {
   addElement(
     text: string,
     emoji = DEFAULT_EMOJI,
-    discovery = false
+    discovery = false,
   ): ICElement {
     if (this.elementNames.has(text)) {
       return this.elementNames.get(text)!;
@@ -445,7 +445,7 @@ class Savefile {
 
     return await compressBuffer(
       new TextEncoder().encode(JSON.stringify(out)),
-      "gzip"
+      "gzip",
     );
   }
 
@@ -512,6 +512,4 @@ class Savefile {
 type ICSavefile = InstanceType<typeof Savefile>;
 
 export { Savefile, getSaveFileType };
-export const ICF = { Savefile, getSaveFileType } as const;
-export default ICF;
 export type { ICSavefile, ICElement, ICElementRecipe, ICElementUse };
