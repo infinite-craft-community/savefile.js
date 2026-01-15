@@ -1,6 +1,6 @@
 import { describe, it, expect } from "bun:test";
 
-import { Savefile } from "~/.";
+import { Savefile } from "../src";
 
 describe("savefile", () => {
   it("should correctly create an empty savefile", () => {

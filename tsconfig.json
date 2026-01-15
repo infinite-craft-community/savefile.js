@@ -1,15 +1,14 @@
 {
   "compilerOptions": {
     "declaration": true,
+    "isolatedDeclarations": true,
 
     "target": "esnext",
     "module": "esnext",
     "moduleResolution": "bundler",
     "moduleDetection": "force",
 
-    "rootDir": "./",
-
-    "paths": { "~/*": ["./src/*"] },
+    "rootDir": "./src",
 
     "skipLibCheck": true,
 
@@ -26,5 +25,5 @@
     "forceConsistentCasingInFileNames": true,
     "verbatimModuleSyntax": true
   },
-  "include": ["src/**/*", "tests/**/*"]
+  "include": ["src/**/*"]
 }

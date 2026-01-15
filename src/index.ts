@@ -14,9 +14,11 @@ const DEFAULT_EMOJI = "⬜";
 const ICB2_HEADER = new Uint8Array([0x49, 0x43, 0x42, 0x1f]);
 const ICB1_HEADER = new Uint8Array([0x15, 0xf1, 0x51, 0x53]);
 
-function getSaveFileType(raw: Uint8Array) {
-  if (raw[0] == 0x1f && raw[1] == 0x8b) return "official";
-  if (raw[0] == 0x7b) return "legacy";
+type SavefileType = "official" | "legacy" | "binaryV2" | "binaryV1";
+
+function getSaveFileType(raw: Uint8Array): SavefileType | null {
+  if (raw[0] === 0x1f && raw[1] === 0x8b) return "official";
+  if (raw[0] === 0x7b) return "legacy";
   if (!ICB2_HEADER.find((x, i) => raw[i] != x)) return "binaryV2";
   if (!ICB1_HEADER.find((x, i) => raw[i] != x)) return "binaryV1";
   return null;
@@ -99,8 +101,6 @@ const getEmojisSorted = (elements: ICElement[]): Map<string, number> => {
 
 /*****************************************/
 
-type SavefileType = ReturnType<typeof getSaveFileType>;
-
 type ICSaveFileOptions = {
   name?: string;
   created?: number;
@@ -114,7 +114,7 @@ class Savefile {
   elements: ICElement[];
   elementNames: Map<string, ICElement>;
   reverseRecipeMap: Map<{ a: ICElement; b: ICElement }, ICElement>;
-  type: SavefileType;
+  type: SavefileType | null;
   options: {
     generateElementUses: boolean;
     generateReverseRecipeMap: boolean;
@@ -151,13 +151,13 @@ class Savefile {
   ): Promise<Savefile | null> {
     const type = getSaveFileType(raw);
 
-    if (type == "official") {
+    if (type === "official") {
       return await new Savefile(options).decodeOfficial(raw);
-    } else if (type == "binaryV2") {
+    } else if (type === "binaryV2") {
       throw new Error("Not implemented");
-    } else if (type == "binaryV1") {
+    } else if (type === "binaryV1") {
       return await new Savefile(options).decodeBinaryV1(raw);
-    } else if (type == "legacy") {
+    } else if (type === "legacy") {
       return new Savefile(options).decodeLegacy(raw);
     }
 
@@ -179,7 +179,7 @@ class Savefile {
 
   addElement(
     text: string,
-    emoji = DEFAULT_EMOJI,
+    emoji: string = DEFAULT_EMOJI,
     discovery = false,
   ): ICElement {
     if (this.elementNames.has(text)) {
@@ -207,7 +207,7 @@ class Savefile {
   addRecipe(a: ICElement, b: ICElement, result: ICElement): void {
     if (!a || !b || !result) return;
     for (const recipe of result.recipes) {
-      if (recipe.a == a && recipe.b == b) return;
+      if (recipe.a === a && recipe.b === b) return;
     }
 
     const pair = { a, b };
@@ -236,7 +236,7 @@ class Savefile {
 
     data.items.sort((a, b) => a.id - b.id);
     for (const item of data.items) {
-      if (item.text == "Nothing") continue;
+      if (item.text === "Nothing") continue;
 
       const id = this.elements.length;
       item.id = id;
@@ -257,7 +257,7 @@ class Savefile {
 
     for (const item of data.items) {
       const result = this.elements[item.id]!;
-      if (!item.recipes || item.text == "Nothing") continue;
+      if (!item.recipes || item.text === "Nothing") continue;
 
       const pairs = new Set<bigint>();
       for (const [aId, bId] of item.recipes) {
@@ -381,13 +381,13 @@ class Savefile {
     if (!data.recipes) data.recipes = {};
 
     for (const element of data.elements) {
-      if (element.text == "Nothing") continue;
+      if (element.text === "Nothing") continue;
       this.addElement(element.text, element.emoji, !!element.discovered);
     }
 
     for (const text in data.recipes) {
       const recipes = data.recipes[text];
-      if (!Array.isArray(recipes) || recipes.length < 1 || text == "Nothing") {
+      if (!Array.isArray(recipes) || recipes.length < 1 || text === "Nothing") {
         continue;
       }
 
@@ -395,7 +395,7 @@ class Savefile {
       const pairs = new Set<bigint>();
 
       for (const [itemA, itemB] of recipes) {
-        if (itemA.text == "Nothing" || itemB.text == "Nothing") continue;
+        if (itemA.text === "Nothing" || itemB.text === "Nothing") continue;
 
         const a = this.addElement(itemA.text, itemA.emoji);
         const b = this.addElement(itemB.text, itemB.emoji);
