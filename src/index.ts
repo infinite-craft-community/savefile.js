@@ -29,9 +29,7 @@ async function compressBuffer(
   format: CompressionFormat,
   compress = true,
 ): Promise<Uint8Array<ArrayBuffer>> {
-  const stream = compress
-    ? new CompressionStream(format)
-    : new DecompressionStream(format);
+  const stream = compress ? new CompressionStream(format) : new DecompressionStream(format);
   const out = new Blob([buffer]).stream().pipeThrough(stream);
 
   return new Uint8Array(await new Response(out).arrayBuffer());
@@ -75,18 +73,13 @@ const encodeString = (str: string, out: number[]): void => {
 };
 
 const decodeString = (read: () => number): string => {
-  return new TextDecoder().decode(
-    new Uint8Array(Array.from({ length: read() }, read)),
-  );
+  return new TextDecoder().decode(new Uint8Array(Array.from({ length: read() }, read)));
 };
 
 const pair2int = (a: number, b: number): bigint =>
   a > b ? (BigInt(a) << 24n) | BigInt(b) : (BigInt(b) << 24n) | BigInt(a);
 
-const int2pair = (n: bigint): [number, number] => [
-  Number(n >> 24n),
-  Number(n & 16777215n),
-];
+const int2pair = (n: bigint): [number, number] => [Number(n >> 24n), Number(n & 16777215n)];
 
 const getEmojisSorted = (elements: ICElement[]): Map<string, number> => {
   const emojis = new Map<string, number>();
@@ -94,9 +87,7 @@ const getEmojisSorted = (elements: ICElement[]): Map<string, number> => {
     emojis.set(emoji, (emojis.get(emoji) || 0) + 1);
   }
 
-  return new Map(
-    [...emojis.entries()].sort((a, b) => b[1] - a[1]).map((x, i) => [x[0], i]),
-  );
+  return new Map([...emojis.entries()].sort((a, b) => b[1] - a[1]).map((x, i) => [x[0], i]));
 };
 
 /*****************************************/
@@ -177,11 +168,7 @@ class Savefile {
     };
   }
 
-  addElement(
-    text: string,
-    emoji: string = DEFAULT_EMOJI,
-    discovery = false,
-  ): ICElement {
+  addElement(text: string, emoji: string = DEFAULT_EMOJI, discovery = false): ICElement {
     if (this.elementNames.has(text)) {
       return this.elementNames.get(text)!;
     }
@@ -437,16 +424,11 @@ class Savefile {
         text: item.text,
         emoji: item.emoji,
         discovery: item.discovery || undefined,
-        recipes: item.recipes.length
-          ? item.recipes.map((x) => [x.a.id, x.b.id])
-          : undefined,
+        recipes: item.recipes.length ? item.recipes.map((x) => [x.a.id, x.b.id]) : undefined,
       })),
     };
 
-    return await compressBuffer(
-      new TextEncoder().encode(JSON.stringify(out)),
-      "gzip",
-    );
+    return await compressBuffer(new TextEncoder().encode(JSON.stringify(out)), "gzip");
   }
 
   async encodeBinaryV1(appendHeader = true): Promise<Uint8Array<ArrayBuffer>> {
@@ -481,10 +463,7 @@ class Savefile {
   encodeLegacy(): string {
     const out: {
       elements: { text: string; emoji: string; discovered?: boolean }[];
-      recipes: Record<
-        string,
-        [{ text: string; emoji: string }, { text: string; emoji: string }][]
-      >;
+      recipes: Record<string, [{ text: string; emoji: string }, { text: string; emoji: string }][]>;
     } = {
       elements: [],
       recipes: {},

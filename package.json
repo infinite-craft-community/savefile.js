@@ -1,29 +1,32 @@
 {
   "name": "savefile.js",
   "version": "0.0.1",
-  "type": "module",
-  "author": "GameRoMan",
   "license": "MIT",
-  "scripts": {
-    "build": "bunx --bun tsdown",
-    "test": "bun test",
-    "test:spam": "bun test --rerun-each 200",
-    "npm:publish": "bun publish"
+  "author": "GameRoMan",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/infinite-craft-community/savefile.js.git"
   },
   "files": [
-    "dist/**/*",
     "README.md",
-    "LICENSE"
+    "dist/**/*"
   ],
-  "devDependencies": {
-    "tsdown": "^0.18.1",
-    "typescript": "^5.9.3"
-  },
-  "main": "./dist/index.mjs",
-  "module": "./dist/index.mjs",
+  "type": "module",
   "types": "./dist/index.d.mts",
   "exports": {
     ".": "./dist/index.mjs",
     "./package.json": "./package.json"
+  },
+  "scripts": {
+    "format": "oxfmt --list-different || oxfmt",
+    "build": "bunx --bun tsdown",
+    "test": "bun test",
+    "test:spam": "bun test --rerun-each 200",
+    "prepublishOnly": "bun publish"
+  },
+  "devDependencies": {
+    "oxfmt": "^0.26.0",
+    "tsdown": "^0.20.1",
+    "typescript": "^5.9.3"
   }
 }
