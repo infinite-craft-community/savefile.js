@@ -1,6 +1,6 @@
 {
   "name": "savefile.js",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "license": "MIT",
   "author": "GameRoMan",
   "repository": {
@@ -22,7 +22,7 @@
     "build": "bunx --bun tsdown",
     "test": "bun test",
     "test:spam": "bun test --rerun-each 200",
-    "prepublishOnly": "bun publish"
+    "prepublishOnly": "bun run build"
   },
   "devDependencies": {
     "oxfmt": "^0.26.0",
