@@ -1,29 +1,9 @@
 {
+  "extends": "@gameroman/config/tsconfig",
   "compilerOptions": {
     "declaration": true,
     "isolatedDeclarations": true,
-
-    "target": "esnext",
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "moduleDetection": "force",
-
-    "rootDir": "./src",
-
-    "skipLibCheck": true,
-
-    // Max strictness
-    "strict": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "forceConsistentCasingInFileNames": true,
-    "verbatimModuleSyntax": true
+    "types": ["bun"]
   },
-  "include": ["src/**/*"]
+  "include": ["src", "tests"]
 }

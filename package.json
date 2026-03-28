@@ -2,31 +2,33 @@
   "name": "savefile.js",
   "version": "0.0.2",
   "license": "MIT",
-  "author": "GameRoMan",
+  "author": "gameroman",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/infinite-craft-community/savefile.js.git"
   },
   "files": [
-    "README.md",
-    "dist/**/*"
+    "dist"
   ],
   "type": "module",
-  "types": "./dist/index.d.mts",
   "exports": {
     ".": "./dist/index.mjs",
     "./package.json": "./package.json"
   },
   "scripts": {
-    "format": "oxfmt --list-different || oxfmt",
+    "lint": "oxlint",
+    "format": "oxfmt",
     "build": "bunx --bun tsdown",
     "test": "bun test",
     "test:spam": "bun test --rerun-each 200",
     "prepublishOnly": "bun run build"
   },
   "devDependencies": {
-    "oxfmt": "^0.26.0",
-    "tsdown": "^0.20.1",
-    "typescript": "^5.9.3"
+    "@gameroman/config": "^0.0.5",
+    "oxfmt": "^0.42.0",
+    "oxlint": "^1.57.0",
+    "oxlint-tsgolint": "^0.18.1",
+    "tsdown": "^0.21.7",
+    "typescript": "^6.0.2"
   }
 }

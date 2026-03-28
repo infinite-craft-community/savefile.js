@@ -91,7 +91,9 @@ describe("savefile", () => {
     expect(legacyEncodedSavefile).toBe(
       `{"elements":[{"text":"Water","emoji":"💧"},{"text":"Fire","emoji":"🔥"},{"text":"Wind","emoji":"🌬️"},{"text":"Earth","emoji":"🌍"},{"text":"Steam","emoji":"💨"},{"text":"Volcano","emoji":"🌋"},{"text":"Smoke","emoji":"💨"},{"text":"Lava","emoji":"🌋"},{"text":"Wave","emoji":"🌊"}],"recipes":{"Steam":[[{"text":"Fire","emoji":"🔥"},{"text":"Water","emoji":"💧"}]],"Volcano":[[{"text":"Fire","emoji":"🔥"},{"text":"Fire","emoji":"🔥"}]],"Smoke":[[{"text":"Fire","emoji":"🔥"},{"text":"Wind","emoji":"🌬️"}]],"Lava":[[{"text":"Earth","emoji":"🌍"},{"text":"Fire","emoji":"🔥"}]],"Wave":[[{"text":"Water","emoji":"💧"},{"text":"Wind","emoji":"🌬️"}]]}}`,
     );
-    const decodedSavefile = await Savefile.decode(new TextEncoder().encode(legacyEncodedSavefile));
+    const decodedSavefile = await Savefile.decode(
+      new TextEncoder().encode(legacyEncodedSavefile),
+    );
     expect(decodedSavefile).not.toBeNull();
     expect(decodedSavefile?.type).toEqual("legacy");
     expect(decodedSavefile?.elements).toEqual(savefile.elements);
@@ -100,7 +102,9 @@ describe("savefile", () => {
   it("should correctly encode and decode using official format", async () => {
     const savefile = exampleSavefile;
     const officialyEncodedSavefile = await savefile.encodeOfficial();
-    expect(officialyEncodedSavefile.length).toBe(officialyEncodedSavefile.byteLength);
+    expect(officialyEncodedSavefile.length).toBe(
+      officialyEncodedSavefile.byteLength,
+    );
     expect(officialyEncodedSavefile.length).toBeWithin(262, 272 + 1);
     const decodedSavefile = await Savefile.decode(officialyEncodedSavefile);
     expect(decodedSavefile).not.toBeNull();
@@ -113,7 +117,9 @@ describe("savefile", () => {
   it("should correctly encode and decode using binaryV1 format", async () => {
     const savefile = exampleSavefile;
     const binaryV1EncodedSavefile = await savefile.encodeBinaryV1();
-    expect(binaryV1EncodedSavefile.length).toBe(binaryV1EncodedSavefile.byteLength);
+    expect(binaryV1EncodedSavefile.length).toBe(
+      binaryV1EncodedSavefile.byteLength,
+    );
     expect(binaryV1EncodedSavefile.length).toBe(128);
     expect(binaryV1EncodedSavefile.toBase64()).toBe(
       "FfFRU+NkDU8sSS1iYmBxyyxKZWZgCc/MS2FhYHVNLCrJYGVgDS5JTcxlYGT8////f372sPyc5MS8fEZGRgbW4Nz87FQGRkZGFp/EskRGRuZ/ICUs4YllqWyMDEzsLB/mT1rB8mF+TzeItZzlw/wpS9k/zO9Z835HP0i4F0R0AQA=",

@@ -1,14 +1,28 @@
-type ICElementRecipe = { a: ICElement; b: ICElement };
-type ICElementUse = { other: ICElement; result: ICElement };
+import {
+  decodeLEB128,
+  decodeString,
+  encodeLEB128,
+  encodeString,
+  pair2int,
+} from "./utils";
 
-type ICElement = {
+interface ICElementRecipe {
+  a: ICElement;
+  b: ICElement;
+}
+interface ICElementUse {
+  other: ICElement;
+  result: ICElement;
+}
+
+interface ICElement {
   id: number;
   text: string;
   emoji: string;
   discovery: boolean;
   recipes: ICElementRecipe[];
   uses: ICElementUse[];
-};
+}
 
 const DEFAULT_EMOJI = "⬜";
 const ICB2_HEADER = new Uint8Array([0x49, 0x43, 0x42, 0x1f]);
@@ -29,7 +43,9 @@ async function compressBuffer(
   format: CompressionFormat,
   compress = true,
 ): Promise<Uint8Array<ArrayBuffer>> {
-  const stream = compress ? new CompressionStream(format) : new DecompressionStream(format);
+  const stream = compress
+    ? new CompressionStream(format)
+    : new DecompressionStream(format);
   const out = new Blob([buffer]).stream().pipeThrough(stream);
 
   return new Uint8Array(await new Response(out).arrayBuffer());
@@ -47,57 +63,50 @@ function addHeader(
 
 /*****************************************/
 
-function encodeLEB128(value: number, out: number[]): number {
-  for (;;) {
-    if (!(value & ~127)) return out.push(value);
-    out.push((value & 127) | 128);
-    value >>>= 7;
-  }
-}
-
-function decodeLEB128(read: () => number): number {
-  let value = 0;
-  let shift = 0;
-  let byte;
-  for (;;) {
-    byte = read();
-    value |= (byte & 127) << shift;
-    if (!(byte & 128)) return value;
-    shift += 7;
-  }
-}
-
-const encodeString = (str: string, out: number[]): void => {
-  const enc = new TextEncoder().encode(str).slice(0, 255);
-  out.push(enc.length, ...enc);
-};
-
-const decodeString = (read: () => number): string => {
-  return new TextDecoder().decode(new Uint8Array(Array.from({ length: read() }, read)));
-};
-
-const pair2int = (a: number, b: number): bigint =>
-  a > b ? (BigInt(a) << 24n) | BigInt(b) : (BigInt(b) << 24n) | BigInt(a);
-
-const int2pair = (n: bigint): [number, number] => [Number(n >> 24n), Number(n & 16777215n)];
-
 const getEmojisSorted = (elements: ICElement[]): Map<string, number> => {
   const emojis = new Map<string, number>();
   for (const { emoji } of elements) {
     emojis.set(emoji, (emojis.get(emoji) || 0) + 1);
   }
 
-  return new Map([...emojis.entries()].sort((a, b) => b[1] - a[1]).map((x, i) => [x[0], i]));
+  return new Map(
+    [...emojis.entries()].sort((a, b) => b[1] - a[1]).map((x, i) => [x[0], i]),
+  );
 };
 
 /*****************************************/
 
-type ICSaveFileOptions = {
+interface ICSaveFileOptions {
   name?: string;
   created?: number;
   generateElementUses?: boolean;
   generateReverseRecipeMap?: boolean;
-};
+}
+
+interface OfficialSavefileItem {
+  id: number;
+  readonly text: string;
+  readonly emoji: string;
+  readonly discovery?: boolean;
+  readonly recipes?: [number, number][];
+}
+
+interface OfficialSavefileData {
+  readonly name: string;
+  readonly created: number;
+  readonly items: OfficialSavefileItem[];
+}
+
+interface LegacyICElement {
+  text: string;
+  emoji: string;
+  discovered?: boolean;
+}
+
+interface LeagacySavefileData {
+  elements?: LegacyICElement[];
+  recipes?: Record<string, unknown>;
+}
 
 class Savefile {
   name: string;
@@ -168,10 +177,13 @@ class Savefile {
     };
   }
 
-  addElement(text: string, emoji: string = DEFAULT_EMOJI, discovery = false): ICElement {
-    if (this.elementNames.has(text)) {
-      return this.elementNames.get(text)!;
-    }
+  addElement(
+    text: string,
+    emoji: string = DEFAULT_EMOJI,
+    discovery = false,
+  ): ICElement {
+    const el = this.elementNames.get(text);
+    if (el) return el;
 
     const element: ICElement = {
       id: this.elements.length,
@@ -215,7 +227,9 @@ class Savefile {
 
   async decodeOfficial(raw: Uint8Array<ArrayBuffer>): Promise<this> {
     const buffer = await compressBuffer(raw, "gzip", false);
-    const data: unknown = JSON.parse(new TextDecoder().decode(buffer));
+    const data: OfficialSavefileData = JSON.parse(
+      new TextDecoder().decode(buffer),
+    );
 
     this.type = "official";
     this.name = data.name;
@@ -248,8 +262,8 @@ class Savefile {
 
       const pairs = new Set<bigint>();
       for (const [aId, bId] of item.recipes) {
-        const a = this.elements[data.items[aId]?.id];
-        const b = this.elements[data.items[bId]?.id];
+        const a = this.elements[data.items[aId]!.id];
+        const b = this.elements[data.items[bId]!.id];
         if (!a || !b) continue;
 
         const pairId = pair2int(a.id, b.id);
@@ -295,6 +309,7 @@ class Savefile {
       const element: ICElement = {
         id,
         text,
+        // @ts-expect-error we are doing some weird manipulation here
         emoji: emojiId,
         discovery: isDiscovery,
         recipes: [],
@@ -306,6 +321,7 @@ class Savefile {
         this.elementNames.set(text, element);
       }
 
+      // @ts-expect-error we can multiply boolean by number
       let recipeCount = flags - isDiscovery * 128;
       if (recipeCount >= 127) recipeCount += decodeLEB128(read);
       if (isDiscovery) this.stats.discoveries++;
@@ -314,7 +330,7 @@ class Savefile {
       recipes.set(id, list);
 
       for (let i = 0; i < recipeCount; i++) {
-        let a = decodeLEB128(read),
+        const a = decodeLEB128(read),
           b = decodeLEB128(read) + a;
         list.push([a, b]);
       }
@@ -324,6 +340,7 @@ class Savefile {
     const emojiCount = decodeLEB128(read);
     for (let i = 0; i < emojiCount; i++) emojis.set(i, decodeString(read));
     for (const element of this.elements) {
+      // @ts-expect-error we are doing some weird manipulation here
       element.emoji = emojis.get(element.emoji) || DEFAULT_EMOJI;
     }
 
@@ -361,7 +378,7 @@ class Savefile {
   }
 
   decodeLegacy(raw: Uint8Array<ArrayBuffer>): this {
-    const data: unknown = JSON.parse(new TextDecoder().decode(raw));
+    const data: LeagacySavefileData = JSON.parse(new TextDecoder().decode(raw));
     this.type = "legacy";
 
     if (!data.elements) data.elements = [];
@@ -424,11 +441,16 @@ class Savefile {
         text: item.text,
         emoji: item.emoji,
         discovery: item.discovery || undefined,
-        recipes: item.recipes.length ? item.recipes.map((x) => [x.a.id, x.b.id]) : undefined,
+        recipes: item.recipes.length
+          ? item.recipes.map((x) => [x.a.id, x.b.id])
+          : undefined,
       })),
     };
 
-    return await compressBuffer(new TextEncoder().encode(JSON.stringify(out)), "gzip");
+    return await compressBuffer(
+      new TextEncoder().encode(JSON.stringify(out)),
+      "gzip",
+    );
   }
 
   async encodeBinaryV1(appendHeader = true): Promise<Uint8Array<ArrayBuffer>> {
@@ -440,6 +462,7 @@ class Savefile {
       encodeString(element.text, out);
       encodeLEB128(emojis.get(element.emoji)!, out);
 
+      // @ts-expect-error we can multiply boolean by number
       out.push(element.discovery * 128 + Math.min(element.recipes.length, 127));
       if (element.recipes.length >= 127) {
         encodeLEB128(element.recipes.length - 127, out);
@@ -463,7 +486,10 @@ class Savefile {
   encodeLegacy(): string {
     const out: {
       elements: { text: string; emoji: string; discovered?: boolean }[];
-      recipes: Record<string, [{ text: string; emoji: string }, { text: string; emoji: string }][]>;
+      recipes: Record<
+        string,
+        [{ text: string; emoji: string }, { text: string; emoji: string }][]
+      >;
     } = {
       elements: [],
       recipes: {},
