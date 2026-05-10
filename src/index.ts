@@ -204,7 +204,6 @@ class Savefile {
   }
 
   addRecipe(a: ICElement, b: ICElement, result: ICElement): void {
-    if (!a || !b || !result) return;
     for (const recipe of result.recipes) {
       if (recipe.a === a && recipe.b === b) return;
     }

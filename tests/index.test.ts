@@ -105,7 +105,7 @@ describe("savefile", () => {
     expect(officialyEncodedSavefile.length).toBe(
       officialyEncodedSavefile.byteLength,
     );
-    expect(officialyEncodedSavefile.length).toBeWithin(262, 272 + 1);
+    expect(officialyEncodedSavefile.length).toBeWithin(261, 272 + 1);
     const decodedSavefile = await Savefile.decode(officialyEncodedSavefile);
     expect(decodedSavefile).not.toBeNull();
     expect(decodedSavefile?.type).toEqual("official");

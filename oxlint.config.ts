@@ -1,5 +1,3 @@
-import { defineConfig } from "@gameroman/config/oxlint/typeaware";
+import { config } from "@gameroman/config/oxlint/typeaware";
 
-export default defineConfig({
-  options: { typeAware: true, typeCheck: false },
-});
+export default config;
