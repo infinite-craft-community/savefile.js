@@ -24,11 +24,12 @@
     "prepublishOnly": "bun run build"
   },
   "devDependencies": {
-    "@gameroman/config": "^0.0.5",
-    "oxfmt": "^0.42.0",
-    "oxlint": "^1.57.0",
-    "oxlint-tsgolint": "^0.18.1",
-    "tsdown": "^0.21.7",
-    "typescript": "^6.0.2"
+    "@gameroman/config": "0.1.0",
+    "@types/bun": "1.3.13",
+    "oxfmt": "0.48.0",
+    "oxlint": "1.63.0",
+    "oxlint-tsgolint": "0.22.1",
+    "tsdown": "0.22.0",
+    "typescript": "6.0.3"
   }
 }
