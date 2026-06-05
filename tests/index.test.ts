@@ -68,13 +68,13 @@ describe("savefile", () => {
     const elementVolcano = savefile.addElement("Volcano", "🌋");
     const elementSmoke = savefile.addElement("Smoke", "💨");
     const elementLava = savefile.addElement("Lava", "🌋");
-    const elementEngine = savefile.addElement("Wave", "🌊");
+    const elementWave = savefile.addElement("Wave", "🌊");
 
     savefile.addRecipe(elementFire, elementWater, elementSteam);
     savefile.addRecipe(elementFire, elementFire, elementVolcano);
     savefile.addRecipe(elementFire, elementWind, elementSmoke);
     savefile.addRecipe(elementEarth, elementFire, elementLava);
-    savefile.addRecipe(elementWater, elementWind, elementEngine);
+    savefile.addRecipe(elementWater, elementWind, elementWave);
     return savefile;
   })();
 

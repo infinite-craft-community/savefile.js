@@ -10,6 +10,7 @@ interface ICElementRecipe {
   a: ICElement;
   b: ICElement;
 }
+
 interface ICElementUse {
   other: ICElement;
   result: ICElement;
