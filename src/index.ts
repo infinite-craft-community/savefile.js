@@ -262,8 +262,12 @@ class Savefile {
 
       const pairs = new Set<bigint>();
       for (const [aId, bId] of item.recipes) {
-        const a = this.elements[data.items[aId]!.id];
-        const b = this.elements[data.items[bId]!.id];
+        const itemA = data.items[aId];
+        const itemB = data.items[bId];
+        if (!itemA || !itemB) continue;
+
+        const a = this.elements[itemA.id];
+        const b = this.elements[itemB.id];
         if (!a || !b) continue;
 
         const pairId = pair2int(a.id, b.id);
