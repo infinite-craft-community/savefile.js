@@ -20,7 +20,8 @@
     "format": "oxfmt",
     "build": "bunx --bun tsdown",
     "test": "bun test",
-    "test:spam": "bun test --rerun-each 200",
+    "test:decoding": "bun test tests/decoding.test.ts",
+    "test:spam": "bun test --rerun-each 200 tests/index.test.ts",
     "prepublishOnly": "bun run build"
   },
   "devDependencies": {
