@@ -29,12 +29,15 @@ const decodeString = (read: () => number): string => {
   );
 };
 
-const pair2int = (a: number, b: number): bigint =>
-  a > b ? (BigInt(a) << 24n) | BigInt(b) : (BigInt(b) << 24n) | BigInt(a);
+const BIT_SHIFT_MULTIPLIER = 0x04000000;
+const LOWER_ID_BITMASK = BIT_SHIFT_MULTIPLIER - 1;
 
-const int2pair = (n: bigint): [number, number] => [
-  Number(n >> 24n),
-  Number(n & 16777215n),
+const pair2int = (a: number, b: number): number =>
+  a > b ? a * BIT_SHIFT_MULTIPLIER + b : b * BIT_SHIFT_MULTIPLIER + a;
+
+const int2pair = (n: number): [number, number] => [
+  Math.floor(n / BIT_SHIFT_MULTIPLIER),
+  n & LOWER_ID_BITMASK,
 ];
 
 export {

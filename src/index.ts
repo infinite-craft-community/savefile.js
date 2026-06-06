@@ -227,9 +227,8 @@ class Savefile {
 
   async decodeOfficial(raw: Uint8Array<ArrayBuffer>): Promise<this> {
     const buffer = await compressBuffer(raw, "gzip", false);
-    const data: OfficialSavefileData = JSON.parse(
-      new TextDecoder().decode(buffer),
-    );
+    const decodedBuffer = new TextDecoder().decode(buffer);
+    const data: OfficialSavefileData = JSON.parse(decodedBuffer);
 
     this.type = "official";
     this.name = data.name;
@@ -260,7 +259,7 @@ class Savefile {
       const result = this.elements[item.id]!;
       if (!item.recipes || item.text === "Nothing") continue;
 
-      const pairs = new Set<bigint>();
+      const pairs = new Set<number>();
       for (const [aId, bId] of item.recipes) {
         const itemA = data.items[aId];
         const itemB = data.items[bId];
@@ -352,7 +351,7 @@ class Savefile {
       const result = this.elements[element];
       if (!result) continue;
 
-      const pairs = new Set<bigint>();
+      const pairs = new Set<number>();
       for (const recipe of list) {
         const a = this.elements[recipe[0]];
         const b = this.elements[recipe[1]];
@@ -382,7 +381,8 @@ class Savefile {
   }
 
   decodeLegacy(raw: Uint8Array<ArrayBuffer>): this {
-    const data: LeagacySavefileData = JSON.parse(new TextDecoder().decode(raw));
+    const decodedBuffer = new TextDecoder().decode(raw);
+    const data: LeagacySavefileData = JSON.parse(decodedBuffer);
     this.type = "legacy";
 
     if (!data.elements) data.elements = [];
@@ -400,7 +400,7 @@ class Savefile {
       }
 
       const result = this.addElement(text);
-      const pairs = new Set<bigint>();
+      const pairs = new Set<number>();
 
       for (const [itemA, itemB] of recipes) {
         if (itemA.text === "Nothing" || itemB.text === "Nothing") continue;
