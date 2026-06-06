@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@gameroman/config": "0.1.0",
+    "@savefile/fixtures": "0.0.0",
     "@types/bun": "1.3.14",
     "oxfmt": "0.53.0",
     "oxlint": "1.68.0",
