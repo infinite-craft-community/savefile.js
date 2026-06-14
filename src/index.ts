@@ -34,8 +34,8 @@ type SavefileType = "official" | "legacy" | "binaryV2" | "binaryV1";
 function getSaveFileType(raw: Uint8Array): SavefileType | null {
   if (raw[0] === 0x1f && raw[1] === 0x8b) return "official";
   if (raw[0] === 0x7b) return "legacy";
-  if (!ICB2_HEADER.find((x, i) => raw[i] != x)) return "binaryV2";
   if (!ICB1_HEADER.find((x, i) => raw[i] != x)) return "binaryV1";
+  if (!ICB2_HEADER.find((x, i) => raw[i] != x)) return "binaryV2";
   return null;
 }
 
@@ -62,8 +62,6 @@ function addHeader(
   return merged;
 }
 
-/*****************************************/
-
 const getEmojisSorted = (elements: ICElement[]): Map<string, number> => {
   const emojis = new Map<string, number>();
   for (const { emoji } of elements) {
@@ -74,8 +72,6 @@ const getEmojisSorted = (elements: ICElement[]): Map<string, number> => {
     [...emojis.entries()].sort((a, b) => b[1] - a[1]).map((x, i) => [x[0], i]),
   );
 };
-
-/*****************************************/
 
 interface ICSaveFileOptions {
   name?: string;
@@ -153,13 +149,13 @@ class Savefile {
     const type = getSaveFileType(raw);
 
     if (type === "official") {
-      return await new Savefile(options).decodeOfficial(raw);
+      return await new Savefile(options).#decodeOfficial(raw);
+    } else if (type === "legacy") {
+      return new Savefile(options).#decodeLegacy(raw);
+    } else if (type === "binaryV1") {
+      return await new Savefile(options).#decodeBinaryV1(raw);
     } else if (type === "binaryV2") {
       throw new Error("Not implemented");
-    } else if (type === "binaryV1") {
-      return await new Savefile(options).decodeBinaryV1(raw);
-    } else if (type === "legacy") {
-      return new Savefile(options).decodeLegacy(raw);
     }
 
     return null;
@@ -223,9 +219,7 @@ class Savefile {
     }
   }
 
-  /**********/
-
-  async decodeOfficial(raw: Uint8Array<ArrayBuffer>): Promise<this> {
+  async #decodeOfficial(raw: Uint8Array<ArrayBuffer>): Promise<this> {
     const buffer = await compressBuffer(raw, "gzip", false);
     const decodedBuffer = new TextDecoder().decode(buffer);
     const data: OfficialSavefileData = JSON.parse(decodedBuffer);
@@ -293,7 +287,7 @@ class Savefile {
     return this;
   }
 
-  async decodeBinaryV1(raw: Uint8Array<ArrayBuffer>): Promise<this> {
+  async #decodeBinaryV1(raw: Uint8Array<ArrayBuffer>): Promise<this> {
     const buffer = await compressBuffer(raw.slice(4), "deflate-raw", false);
 
     let pos = -1;
@@ -380,7 +374,7 @@ class Savefile {
     return this;
   }
 
-  decodeLegacy(raw: Uint8Array<ArrayBuffer>): this {
+  #decodeLegacy(raw: Uint8Array<ArrayBuffer>): this {
     const decodedBuffer = new TextDecoder().decode(raw);
     const data: LeagacySavefileData = JSON.parse(decodedBuffer);
     this.type = "legacy";
@@ -430,8 +424,6 @@ class Savefile {
     this.stats.elements = this.elements.length;
     return this;
   }
-
-  /**********/
 
   async encodeOfficial(): Promise<Uint8Array<ArrayBuffer>> {
     const out = {
@@ -540,4 +532,10 @@ class Savefile {
 type ICSavefile = InstanceType<typeof Savefile>;
 
 export { Savefile, getSaveFileType };
-export type { ICSavefile, ICElement, ICElementRecipe, ICElementUse };
+export type {
+  ICSavefile,
+  ICElement,
+  ICElementRecipe,
+  ICElementUse,
+  SavefileType,
+};
