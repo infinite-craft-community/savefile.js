@@ -516,6 +516,25 @@ class Savefile {
 
     return JSON.stringify(out);
   }
+
+  async asBlob(type: SavefileType): Promise<Blob> {
+    if (type === "legacy") {
+      const data = this.encodeLegacy();
+      return new Blob([data], { type: "application/json" });
+    }
+
+    let data: Uint8Array<ArrayBuffer>;
+
+    if (type === "official") {
+      data = await this.encodeOfficial();
+    } else if (type === "binaryV1") {
+      data = await this.encodeBinaryV1();
+    } else {
+      throw new Error("Not implemented");
+    }
+
+    return new Blob([data], { type: "application/octet-stream" });
+  }
 }
 
 type ICSavefile = InstanceType<typeof Savefile>;

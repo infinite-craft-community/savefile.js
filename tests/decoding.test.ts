@@ -1,7 +1,7 @@
 import { describe, it, expect } from "bun:test";
 
-import { Savefile } from "savefile.js";
 import { loadFixture } from "@savefile/fixtures";
+import { Savefile } from "savefile.js";
 
 describe("Savefile.decode", () => {
   it("should correctly decode a 2024-10-18.json savefile", async () => {

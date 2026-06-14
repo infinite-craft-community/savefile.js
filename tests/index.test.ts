@@ -131,4 +131,44 @@ describe("savefile", () => {
     expect(decodedSavefile?.stats).toEqual(savefile.stats);
     expect(decodedSavefile?.elements).toEqual(savefile.elements);
   });
+
+  describe("asBlob", () => {
+    it("should correctly handle legacy format", async () => {
+      const savefile = exampleSavefile;
+      const blob = await savefile.asBlob("legacy");
+      expect(blob).toBeInstanceOf(Blob);
+      expect(blob.type).toStartWith("application/json");
+      const text = await blob.text();
+      expect(text).toBe(savefile.encodeLegacy());
+    });
+
+    it("should correctly handle official format", async () => {
+      const savefile = exampleSavefile;
+      const blob = await savefile.asBlob("official");
+      expect(blob).toBeInstanceOf(Blob);
+      expect(blob.type).toBe("application/octet-stream");
+      const buffer = new Uint8Array(await blob.arrayBuffer());
+      const decodedSavefile = await Savefile.decode(buffer);
+      expect(decodedSavefile).not.toBeNull();
+      expect(decodedSavefile?.type).toEqual("official");
+      expect(decodedSavefile?.name).toEqual(savefile.name);
+      expect(decodedSavefile?.stats).toEqual(savefile.stats);
+      expect(decodedSavefile?.elements).toEqual(savefile.elements);
+    });
+
+    it("should correctly handle binaryV1 format", async () => {
+      const savefile = exampleSavefile;
+      const blob = await savefile.asBlob("binaryV1");
+      expect(blob).toBeInstanceOf(Blob);
+      expect(blob.type).toBe("application/octet-stream");
+      const buffer = new Uint8Array(await blob.arrayBuffer());
+      expect(buffer).toEqual(await savefile.encodeBinaryV1());
+      const decodedSavefile = await Savefile.decode(buffer);
+      expect(decodedSavefile).not.toBeNull();
+      expect(decodedSavefile?.type).toEqual("binaryV1");
+      expect(decodedSavefile?.name).toEqual(savefile.name);
+      expect(decodedSavefile?.stats).toEqual(savefile.stats);
+      expect(decodedSavefile?.elements).toEqual(savefile.elements);
+    });
+  });
 });
