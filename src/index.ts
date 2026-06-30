@@ -12,17 +12,17 @@ interface ICElementRecipe {
 }
 
 interface ICElementUse {
-  other: ICElement;
-  result: ICElement;
+  readonly other: ICElement;
+  readonly result: ICElement;
 }
 
 interface ICElement {
-  id: number;
-  text: string;
+  readonly id: number;
+  readonly text: string;
   emoji: string;
   discovery: boolean;
-  recipes: ICElementRecipe[];
-  uses: ICElementUse[];
+  readonly recipes: ICElementRecipe[];
+  readonly uses: ICElementUse[];
 }
 
 const DEFAULT_EMOJI = "⬜";
@@ -74,10 +74,10 @@ const getEmojisSorted = (elements: ICElement[]): Map<string, number> => {
 };
 
 interface ICSaveFileOptions {
-  name?: string;
-  created?: number;
-  generateElementUses?: boolean;
-  generateReverseRecipeMap?: boolean;
+  readonly name?: string;
+  readonly created?: number;
+  readonly generateElementUses?: boolean;
+  readonly generateReverseRecipeMap?: boolean;
 }
 
 interface OfficialSavefileItem {
@@ -85,7 +85,7 @@ interface OfficialSavefileItem {
   readonly text: string;
   readonly emoji: string;
   readonly discovery?: boolean;
-  readonly recipes?: [number, number][];
+  readonly recipes?: readonly (readonly [number, number])[];
 }
 
 interface OfficialSavefileData {
@@ -95,9 +95,9 @@ interface OfficialSavefileData {
 }
 
 interface LegacyICElement {
-  text: string;
-  emoji: string;
-  discovered?: boolean;
+  readonly text: string;
+  readonly emoji: string;
+  readonly discovered?: boolean;
 }
 
 interface LeagacySavefileData {
@@ -105,22 +105,26 @@ interface LeagacySavefileData {
   recipes?: Record<string, unknown>;
 }
 
+interface SavefileOptions {
+  readonly generateElementUses: boolean;
+  readonly generateReverseRecipeMap: boolean;
+}
+
+interface SavefileStats {
+  elements: number;
+  discoveries: number;
+  recipes: number;
+}
+
 class Savefile {
   name: string;
   created: number;
-  elements: ICElement[];
-  elementNames: Map<string, ICElement>;
-  reverseRecipeMap: Map<{ a: ICElement; b: ICElement }, ICElement>;
+  readonly elements: ICElement[];
+  readonly elementNames: Map<string, ICElement>;
+  readonly reverseRecipeMap: Map<{ a: ICElement; b: ICElement }, ICElement>;
   type: SavefileType | null;
-  options: {
-    generateElementUses: boolean;
-    generateReverseRecipeMap: boolean;
-  };
-  stats: {
-    elements: number;
-    discoveries: number;
-    recipes: number;
-  };
+  readonly options: SavefileOptions;
+  stats: SavefileStats;
 
   constructor(options: ICSaveFileOptions = {}) {
     this.name = options.name ?? "Save File";
@@ -538,4 +542,6 @@ export type {
   ICElementRecipe,
   ICElementUse,
   SavefileType,
+  SavefileStats,
+  SavefileOptions,
 };
