@@ -129,30 +129,26 @@ interface SavefileStats {
 class Savefile {
   name: string;
   created: number;
-  readonly elements: ICElement[];
+  readonly elements: ICElement[] = [];
   readonly elementNames: Map<string, ICElement>;
-  readonly reverseRecipeMap: Map<{ a: ICElement; b: ICElement }, ICElement>;
-  type: SavefileType | null;
+  readonly reverseRecipeMap: Map<ICElementRecipe, ICElement>;
+  readonly type: SavefileType;
   readonly options: SavefileOptions;
-  stats: SavefileStats;
+  readonly stats: SavefileStats = { elements: 0, discoveries: 0, recipes: 0 };
 
-  constructor(options: ICSaveFileOptions = {}) {
+  constructor(
+    type: SavefileType = "official",
+    options: ICSaveFileOptions = {},
+  ) {
+    this.type = type;
     this.name = options.name ?? "Save File";
     this.created = options.created ?? Date.now();
-    this.elements = [];
     this.elementNames = new Map();
     this.reverseRecipeMap = new Map();
-    this.type = null;
 
     this.options = {
       generateElementUses: options.generateElementUses ?? true,
       generateReverseRecipeMap: options.generateReverseRecipeMap ?? true,
-    };
-
-    this.stats = {
-      elements: 0,
-      discoveries: 0,
-      recipes: 0,
     };
   }
 
@@ -162,30 +158,19 @@ class Savefile {
   ): Promise<Savefile | null> {
     const type = getSaveFileType(raw);
 
+    if (!type) return null;
+
+    const save = new Savefile(type, options);
+
     if (type === "official") {
-      return await new Savefile(options).#decodeOfficial(raw);
+      return await save.#decodeOfficial(raw);
     } else if (type === "legacy") {
-      return new Savefile(options).#decodeLegacy(raw);
+      return save.#decodeLegacy(raw);
     } else if (type === "binaryV1") {
-      return await new Savefile(options).#decodeBinaryV1(raw);
-    } else if (type === "binaryV2") {
-      throw new Error("Not implemented");
+      return await save.#decodeBinaryV1(raw);
     }
 
-    return null;
-  }
-
-  clear(): void {
-    this.created = Date.now();
-    this.elements.splice(0);
-    this.elementNames.clear();
-    this.reverseRecipeMap.clear();
-    this.type = null;
-    this.stats = {
-      elements: 0,
-      discoveries: 0,
-      recipes: 0,
-    };
+    throw new Error("Not implemented");
   }
 
   addElement(
@@ -219,6 +204,10 @@ class Savefile {
       if (recipe.a === a && recipe.b === b) return;
     }
 
+    this.#addRecipe(a, b, result);
+  }
+
+  #addRecipe(a: ICElement, b: ICElement, result: ICElement): void {
     const pair = { a, b };
     result.recipes.push(pair);
     this.stats.recipes++;
@@ -238,7 +227,6 @@ class Savefile {
     const decodedBuffer = new TextDecoder().decode(buffer);
     const data: OfficialSavefileData = JSON.parse(decodedBuffer);
 
-    this.type = "official";
     this.name = data.name;
     this.created = data.created;
 
@@ -281,19 +269,7 @@ class Savefile {
         if (pairs.has(pairId)) continue;
         pairs.add(pairId);
 
-        const pair = { a, b };
-
-        result.recipes.push(pair);
-        this.stats.recipes++;
-
-        if (this.options.generateReverseRecipeMap) {
-          this.reverseRecipeMap.set(pair, result);
-        }
-
-        if (this.options.generateElementUses) {
-          a.uses.push({ other: b, result });
-          b.uses.push({ other: a, result });
-        }
+        this.#addRecipe(a, b, result);
       }
     }
 
@@ -306,7 +282,6 @@ class Savefile {
 
     let pos = -1;
     const read = () => buffer[++pos]!;
-    this.type = "binaryV1";
 
     const elementCount = decodeLEB128(read);
     const recipes = new Map<number, [number, number][]>();
@@ -369,18 +344,7 @@ class Savefile {
         if (pairs.has(pairId)) continue;
         pairs.add(pairId);
 
-        const pair = { a, b } as const;
-        result.recipes.push(pair);
-        this.stats.recipes++;
-
-        if (this.options.generateReverseRecipeMap) {
-          this.reverseRecipeMap.set(pair, result);
-        }
-
-        if (this.options.generateElementUses) {
-          a.uses.push({ other: b, result });
-          b.uses.push({ other: a, result });
-        }
+        this.#addRecipe(a, b, result);
       }
     }
 
@@ -391,10 +355,9 @@ class Savefile {
   #decodeLegacy(raw: Uint8Array<ArrayBuffer>): this {
     const decodedBuffer = new TextDecoder().decode(raw);
     const data: LeagacySavefileData = JSON.parse(decodedBuffer);
-    this.type = "legacy";
 
-    if (!data.elements) data.elements = [];
-    if (!data.recipes) data.recipes = {};
+    data.elements ??= [];
+    data.recipes ??= {};
 
     for (const element of data.elements) {
       if (element.text === "Nothing") continue;
@@ -420,18 +383,7 @@ class Savefile {
         if (pairs.has(pairId)) continue;
         pairs.add(pairId);
 
-        const pair = { a, b };
-        result.recipes.push(pair);
-        this.stats.recipes++;
-
-        if (this.options.generateReverseRecipeMap) {
-          this.reverseRecipeMap.set(pair, result);
-        }
-
-        if (this.options.generateElementUses) {
-          a.uses.push({ other: b, result });
-          b.uses.push({ other: a, result });
-        }
+        this.#addRecipe(a, b, result);
       }
     }
 
@@ -531,6 +483,11 @@ class Savefile {
     }
 
     return new Blob([data], { type: "application/octet-stream" });
+  }
+
+  async asFile(type: SavefileType, fileName: string): Promise<File> {
+    const blob = await this.asBlob(type);
+    return new File([blob], fileName, { type: blob.type });
   }
 }
 
