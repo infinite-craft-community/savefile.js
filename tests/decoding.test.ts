@@ -12,17 +12,14 @@ async function toFile(
   savefile: Savefile,
   filename: KnownFixture,
 ): Promise<File> {
-  // @ts-expect-error should be not null
-  const blob = await savefile.asBlob(savefile.type);
-  return new File([blob], filename, { type: blob.type });
+  return await savefile.asFile(savefile.type, filename);
 }
 
 describe("Savefile.decode", () => {
   it("should correctly decode a 2024-10-18.json savefile", async () => {
     const raw = loadFixture("2024-10-18.json");
     expect(getSaveFileType(raw)).toBe("legacy");
-    // @ts-expect-error should be not null
-    const savefile: Savefile = await Savefile.decode(raw);
+    const savefile = (await Savefile.decode(raw))!;
     expect(savefile).not.toBeNull();
     expect(savefile.type).toBe("legacy");
     expect(savefile.stats).toEqual({
@@ -37,8 +34,7 @@ describe("Savefile.decode", () => {
   it("should correctly decode a 2025-04-04.ic savefile", async () => {
     const raw = loadFixture("2025-04-04.ic");
     expect(getSaveFileType(raw)).toBe("official");
-    // @ts-expect-error should be not null
-    const savefile: Savefile = await Savefile.decode(raw);
+    const savefile = (await Savefile.decode(raw))!;
     expect(savefile).not.toBeNull();
     expect(savefile.type).toBe("official");
     expect(savefile.created).toBe(1743005840697);
@@ -54,8 +50,7 @@ describe("Savefile.decode", () => {
   it("should correctly decode a catstone-2026-06-06.ic savefile", async () => {
     const raw = loadFixture("catstone-2026-06-06.ic");
     expect(getSaveFileType(raw)).toBe("official");
-    // @ts-expect-error should be not null
-    const savefile: Savefile = await Savefile.decode(raw);
+    const savefile = (await Savefile.decode(raw))!;
     expect(savefile).not.toBeNull();
     expect(savefile.type).toBe("official");
     expect(savefile.created).toBe(1743077965336);
