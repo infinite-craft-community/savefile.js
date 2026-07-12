@@ -31,6 +31,13 @@ const ICB1_HEADER = new Uint8Array([0x15, 0xf1, 0x51, 0x53]);
 
 type SavefileType = "official" | "legacy" | "binaryV2" | "binaryV1";
 
+async function getSaveFileTypeFromFile(
+  file: File,
+): Promise<SavefileType | null> {
+  const header = await file.slice(0, 4).bytes();
+  return getSaveFileType(header);
+}
+
 function getSaveFileType(raw: Uint8Array): SavefileType | null {
   if (raw[0] === 0x1f && raw[1] === 0x8b) return "official";
   if (raw[0] === 0x7b) return "legacy";
@@ -535,7 +542,7 @@ class Savefile {
 
 type ICSavefile = InstanceType<typeof Savefile>;
 
-export { Savefile, getSaveFileType };
+export { Savefile, getSaveFileType, getSaveFileTypeFromFile };
 export type {
   ICSavefile,
   ICElement,

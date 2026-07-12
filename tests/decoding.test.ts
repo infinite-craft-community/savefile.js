@@ -1,11 +1,26 @@
 import { describe, it, expect } from "bun:test";
 
 import { loadFixture } from "@savefile/fixtures";
-import { Savefile } from "savefile.js";
+import type { KnownFixture } from "@savefile/fixtures";
+import {
+  Savefile,
+  getSaveFileType,
+  getSaveFileTypeFromFile,
+} from "savefile.js";
+
+async function toFile(
+  savefile: Savefile,
+  filename: KnownFixture,
+): Promise<File> {
+  // @ts-expect-error should be not null
+  const blob = await savefile.asBlob(savefile.type);
+  return new File([blob], filename, { type: blob.type });
+}
 
 describe("Savefile.decode", () => {
   it("should correctly decode a 2024-10-18.json savefile", async () => {
     const raw = loadFixture("2024-10-18.json");
+    expect(getSaveFileType(raw)).toBe("legacy");
     // @ts-expect-error should be not null
     const savefile: Savefile = await Savefile.decode(raw);
     expect(savefile).not.toBeNull();
@@ -15,10 +30,13 @@ describe("Savefile.decode", () => {
       discoveries: 6932,
       recipes: 25265,
     });
+    const file = await toFile(savefile, "2024-10-18.json");
+    expect(await getSaveFileTypeFromFile(file)).toBe("legacy");
   });
 
   it("should correctly decode a 2025-04-04.ic savefile", async () => {
     const raw = loadFixture("2025-04-04.ic");
+    expect(getSaveFileType(raw)).toBe("official");
     // @ts-expect-error should be not null
     const savefile: Savefile = await Savefile.decode(raw);
     expect(savefile).not.toBeNull();
@@ -29,10 +47,13 @@ describe("Savefile.decode", () => {
       discoveries: 43585,
       recipes: 110163,
     });
+    const file = await toFile(savefile, "2025-04-04.ic");
+    expect(await getSaveFileTypeFromFile(file)).toBe("official");
   });
 
   it("should correctly decode a catstone-2026-06-06.ic savefile", async () => {
     const raw = loadFixture("catstone-2026-06-06.ic");
+    expect(getSaveFileType(raw)).toBe("official");
     // @ts-expect-error should be not null
     const savefile: Savefile = await Savefile.decode(raw);
     expect(savefile).not.toBeNull();
@@ -43,5 +64,7 @@ describe("Savefile.decode", () => {
       discoveries: 37072,
       recipes: 256145,
     });
+    const file = await toFile(savefile, "catstone-2026-06-06.ic");
+    expect(await getSaveFileTypeFromFile(file)).toBe("official");
   });
 });
