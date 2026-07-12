@@ -31,6 +31,13 @@ const ICB1_HEADER = new Uint8Array([0x15, 0xf1, 0x51, 0x53]);
 
 type SavefileType = "official" | "legacy" | "binaryV2" | "binaryV1";
 
+async function getSaveFileTypeFromFile(
+  file: File,
+): Promise<SavefileType | null> {
+  const header = await file.slice(0, 4).bytes();
+  return getSaveFileType(header);
+}
+
 function getSaveFileType(raw: Uint8Array): SavefileType | null {
   if (raw[0] === 0x1f && raw[1] === 0x8b) return "official";
   if (raw[0] === 0x7b) return "legacy";
@@ -94,15 +101,18 @@ interface OfficialSavefileData {
   readonly items: OfficialSavefileItem[];
 }
 
-interface LegacyICElement {
+interface LegacyICElementBase {
   readonly text: string;
   readonly emoji: string;
+}
+
+interface LegacyICElement extends LegacyICElementBase {
   readonly discovered?: boolean;
 }
 
 interface LeagacySavefileData {
   elements?: LegacyICElement[];
-  recipes?: Record<string, unknown>;
+  recipes?: Record<string, [LegacyICElementBase, LegacyICElementBase][]>;
 }
 
 interface SavefileOptions {
@@ -484,16 +494,7 @@ class Savefile {
   }
 
   encodeLegacy(): string {
-    const out: {
-      elements: { text: string; emoji: string; discovered?: boolean }[];
-      recipes: Record<
-        string,
-        [{ text: string; emoji: string }, { text: string; emoji: string }][]
-      >;
-    } = {
-      elements: [],
-      recipes: {},
-    };
+    const out: Required<LeagacySavefileData> = { elements: [], recipes: {} };
 
     for (const element of this.elements) {
       out.elements.push({
@@ -535,7 +536,7 @@ class Savefile {
 
 type ICSavefile = InstanceType<typeof Savefile>;
 
-export { Savefile, getSaveFileType };
+export { Savefile, getSaveFileType, getSaveFileTypeFromFile };
 export type {
   ICSavefile,
   ICElement,
