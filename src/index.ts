@@ -101,15 +101,18 @@ interface OfficialSavefileData {
   readonly items: OfficialSavefileItem[];
 }
 
-interface LegacyICElement {
+interface LegacyICElementBase {
   readonly text: string;
   readonly emoji: string;
+}
+
+interface LegacyICElement extends LegacyICElementBase {
   readonly discovered?: boolean;
 }
 
 interface LeagacySavefileData {
   elements?: LegacyICElement[];
-  recipes?: Record<string, unknown>;
+  recipes?: Record<string, [LegacyICElementBase, LegacyICElementBase][]>;
 }
 
 interface SavefileOptions {
@@ -491,16 +494,7 @@ class Savefile {
   }
 
   encodeLegacy(): string {
-    const out: {
-      elements: { text: string; emoji: string; discovered?: boolean }[];
-      recipes: Record<
-        string,
-        [{ text: string; emoji: string }, { text: string; emoji: string }][]
-      >;
-    } = {
-      elements: [],
-      recipes: {},
-    };
+    const out: Required<LeagacySavefileData> = { elements: [], recipes: {} };
 
     for (const element of this.elements) {
       out.elements.push({

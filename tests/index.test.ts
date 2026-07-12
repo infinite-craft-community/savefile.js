@@ -147,7 +147,7 @@ describe("savefile", () => {
       const blob = await savefile.asBlob("official");
       expect(blob).toBeInstanceOf(Blob);
       expect(blob.type).toBe("application/octet-stream");
-      const buffer = new Uint8Array(await blob.arrayBuffer());
+      const buffer = await blob.bytes();
       const decodedSavefile = await Savefile.decode(buffer);
       expect(decodedSavefile).not.toBeNull();
       expect(decodedSavefile?.type).toEqual("official");
@@ -161,7 +161,7 @@ describe("savefile", () => {
       const blob = await savefile.asBlob("binaryV1");
       expect(blob).toBeInstanceOf(Blob);
       expect(blob.type).toBe("application/octet-stream");
-      const buffer = new Uint8Array(await blob.arrayBuffer());
+      const buffer = await blob.bytes();
       expect(buffer).toEqual(await savefile.encodeBinaryV1());
       const decodedSavefile = await Savefile.decode(buffer);
       expect(decodedSavefile).not.toBeNull();
