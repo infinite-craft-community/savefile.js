@@ -18,7 +18,7 @@
   "scripts": {
     "lint": "oxlint",
     "format": "oxfmt",
-    "build": "bunx --bun tsdown",
+    "build": "tsdown",
     "test": "bun test",
     "test:decoding": "bun test tests/decoding.test.ts",
     "test:spam": "bun test --rerun-each 200 tests/index.test.ts",

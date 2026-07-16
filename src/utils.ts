@@ -7,9 +7,10 @@ function encodeLEB128(value: number, out: number[]): number {
 }
 
 function decodeLEB128(read: () => number): number {
-  let value = 0;
-  let shift = 0;
-  let byte;
+  let value = 0,
+    shift = 0,
+    byte;
+
   for (;;) {
     byte = read();
     value |= (byte & 127) << shift;
