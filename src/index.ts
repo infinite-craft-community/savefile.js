@@ -7,8 +7,8 @@ import {
 } from "./utils";
 
 interface ICElementRecipe {
-  a: ICElement;
-  b: ICElement;
+  readonly a: ICElement;
+  readonly b: ICElement;
 }
 
 interface ICElementUse {
@@ -26,19 +26,20 @@ interface ICElement {
 }
 
 const DEFAULT_EMOJI = "⬜";
-const ICB2_HEADER = new Uint8Array([0x49, 0x43, 0x42, 0x1f]);
+
 const ICB1_HEADER = new Uint8Array([0x15, 0xf1, 0x51, 0x53]);
+const ICB2_HEADER = new Uint8Array([0x49, 0x43, 0x42, 0x1f]);
 
 type SavefileType = "official" | "legacy" | "binaryV2" | "binaryV1";
 
-async function getSaveFileTypeFromFile(
+async function getSavefileTypeFromFile(
   file: File,
 ): Promise<SavefileType | null> {
   const header = await file.slice(0, 4).bytes();
-  return getSaveFileType(header);
+  return getSavefileType(header);
 }
 
-function getSaveFileType(raw: Uint8Array): SavefileType | null {
+function getSavefileType(raw: Uint8Array): SavefileType | null {
   if (raw[0] === 0x1f && raw[1] === 0x8b) return "official";
   if (raw[0] === 0x7b) return "legacy";
   if (!ICB1_HEADER.find((x, i) => raw[i] != x)) return "binaryV1";
@@ -46,11 +47,13 @@ function getSaveFileType(raw: Uint8Array): SavefileType | null {
   return null;
 }
 
+type Bytes = Uint8Array<ArrayBuffer>;
+
 async function compressBuffer(
-  buffer: Uint8Array<ArrayBuffer>,
+  buffer: Bytes,
   format: CompressionFormat,
   compress = true,
-): Promise<Uint8Array<ArrayBuffer>> {
+): Promise<Bytes> {
   const stream = compress
     ? new CompressionStream(format)
     : new DecompressionStream(format);
@@ -59,10 +62,7 @@ async function compressBuffer(
   return new Uint8Array(await new Response(out).arrayBuffer());
 }
 
-function addHeader(
-  buffer: Uint8Array<ArrayBuffer>,
-  header: Uint8Array<ArrayBuffer>,
-): Uint8Array<ArrayBuffer> {
+function addHeader(buffer: Bytes, header: Bytes): Bytes {
   const merged = new Uint8Array(header.length + buffer.length);
   merged.set(header);
   merged.set(buffer, header.length);
@@ -80,13 +80,6 @@ const getEmojisSorted = (elements: ICElement[]): Map<string, number> => {
   );
 };
 
-interface ICSaveFileOptions {
-  readonly name?: string;
-  readonly created?: number;
-  readonly generateElementUses?: boolean;
-  readonly generateReverseRecipeMap?: boolean;
-}
-
 interface OfficialSavefileItem {
   id: number;
   readonly text: string;
@@ -98,6 +91,9 @@ interface OfficialSavefileItem {
 interface OfficialSavefileData {
   readonly name: string;
   readonly created: number;
+  readonly updated: number;
+  readonly version: "1.0";
+  readonly instances: unknown[];
   readonly items: OfficialSavefileItem[];
 }
 
@@ -115,36 +111,35 @@ interface LeagacySavefileData {
   recipes?: Record<string, [LegacyICElementBase, LegacyICElementBase][]>;
 }
 
-interface SavefileOptions {
-  readonly generateElementUses: boolean;
-  readonly generateReverseRecipeMap: boolean;
-}
-
 interface SavefileStats {
   elements: number;
   discoveries: number;
   recipes: number;
 }
 
+interface SavefileOptions {
+  readonly generateElementUses: boolean;
+  readonly generateReverseRecipeMap: boolean;
+}
+
+interface ICSavefileOptions extends Partial<SavefileOptions> {
+  readonly name?: string;
+  readonly created?: number;
+}
+
 class Savefile {
   name: string;
   created: number;
   readonly elements: ICElement[] = [];
-  readonly elementNames: Map<string, ICElement>;
-  readonly reverseRecipeMap: Map<ICElementRecipe, ICElement>;
-  readonly type: SavefileType;
+  readonly elementNames: Map<string, ICElement> = new Map();
+  readonly reverseRecipeMap: Map<ICElementRecipe, ICElement> = new Map();
+  type: SavefileType = "official";
   readonly options: SavefileOptions;
   readonly stats: SavefileStats = { elements: 0, discoveries: 0, recipes: 0 };
 
-  constructor(
-    type: SavefileType = "official",
-    options: ICSaveFileOptions = {},
-  ) {
-    this.type = type;
+  constructor(options: ICSavefileOptions = {}) {
     this.name = options.name ?? "Save File";
     this.created = options.created ?? Date.now();
-    this.elementNames = new Map();
-    this.reverseRecipeMap = new Map();
 
     this.options = {
       generateElementUses: options.generateElementUses ?? true,
@@ -153,14 +148,15 @@ class Savefile {
   }
 
   static async decode(
-    raw: Uint8Array<ArrayBuffer>,
-    options?: ICSaveFileOptions,
+    raw: Bytes,
+    options?: ICSavefileOptions,
   ): Promise<Savefile | null> {
-    const type = getSaveFileType(raw);
+    const type = getSavefileType(raw);
 
     if (!type) return null;
 
-    const save = new Savefile(type, options);
+    const save = new Savefile(options);
+    save.type = type;
 
     if (type === "official") {
       return await save.#decodeOfficial(raw);
@@ -222,7 +218,7 @@ class Savefile {
     }
   }
 
-  async #decodeOfficial(raw: Uint8Array<ArrayBuffer>): Promise<this> {
+  async #decodeOfficial(raw: Bytes): Promise<this> {
     const buffer = await compressBuffer(raw, "gzip", false);
     const decodedBuffer = new TextDecoder().decode(buffer);
     const data: OfficialSavefileData = JSON.parse(decodedBuffer);
@@ -277,7 +273,7 @@ class Savefile {
     return this;
   }
 
-  async #decodeBinaryV1(raw: Uint8Array<ArrayBuffer>): Promise<this> {
+  async #decodeBinaryV1(raw: Bytes): Promise<this> {
     const buffer = await compressBuffer(raw.slice(4), "deflate-raw", false);
 
     let pos = -1;
@@ -352,7 +348,7 @@ class Savefile {
     return this;
   }
 
-  #decodeLegacy(raw: Uint8Array<ArrayBuffer>): this {
+  #decodeLegacy(raw: Bytes): this {
     const decodedBuffer = new TextDecoder().decode(raw);
     const data: LeagacySavefileData = JSON.parse(decodedBuffer);
 
@@ -391,8 +387,8 @@ class Savefile {
     return this;
   }
 
-  async encodeOfficial(): Promise<Uint8Array<ArrayBuffer>> {
-    const out = {
+  async encodeOfficial(): Promise<Bytes> {
+    const out: OfficialSavefileData = {
       name: this.name || "Save File",
       created: this.created || Date.now(),
       updated: Date.now(),
@@ -415,7 +411,7 @@ class Savefile {
     );
   }
 
-  async encodeBinaryV1(appendHeader = true): Promise<Uint8Array<ArrayBuffer>> {
+  async encodeBinaryV1(appendHeader = true): Promise<Bytes> {
     const out: number[] = [];
     const emojis = getEmojisSorted(this.elements);
 
@@ -472,7 +468,7 @@ class Savefile {
       return new Blob([data], { type: "application/json" });
     }
 
-    let data: Uint8Array<ArrayBuffer>;
+    let data: Bytes;
 
     if (type === "official") {
       data = await this.encodeOfficial();
@@ -493,7 +489,7 @@ class Savefile {
 
 type ICSavefile = InstanceType<typeof Savefile>;
 
-export { Savefile, getSaveFileType, getSaveFileTypeFromFile };
+export { Savefile, getSavefileType, getSavefileTypeFromFile };
 export type {
   ICSavefile,
   ICElement,
