@@ -42,8 +42,8 @@ async function getSavefileTypeFromFile(
 function getSavefileType(raw: Uint8Array): SavefileType | null {
   if (raw[0] === 0x1f && raw[1] === 0x8b) return "official";
   if (raw[0] === 0x7b) return "legacy";
-  if (!ICB1_HEADER.find((x, i) => raw[i] != x)) return "binaryV1";
-  if (!ICB2_HEADER.find((x, i) => raw[i] != x)) return "binaryV2";
+  if (ICB1_HEADER.every((x, i) => raw[i] === x)) return "binaryV1";
+  if (ICB2_HEADER.every((x, i) => raw[i] === x)) return "binaryV2";
   return null;
 }
 
