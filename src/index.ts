@@ -58,8 +58,7 @@ async function compressBuffer(
     ? new CompressionStream(format)
     : new DecompressionStream(format);
   const out = new Blob([buffer]).stream().pipeThrough(stream);
-
-  return new Uint8Array(await new Response(out).arrayBuffer());
+  return await new Response(out).bytes();
 }
 
 function addHeader(buffer: Bytes, header: Bytes): Bytes {
