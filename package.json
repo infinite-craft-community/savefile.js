@@ -33,5 +33,9 @@
     "oxlint-tsgolint": "7.0.2001",
     "tsdown": "0.22.14",
     "typescript": "7.0.2"
+  },
+  "engines": {
+    "node": ">=22.3.0",
+    "bun": ">=1.4.0"
   }
 }
