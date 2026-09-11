@@ -25,7 +25,7 @@
     "prepublishOnly": "bun run build"
   },
   "devDependencies": {
-    "@gameroman/config": "0.2.9",
+    "@gameroman/config": "0.3.0",
     "@savefile/fixtures": "0.0.1",
     "@types/bun": "1.4.2",
     "oxfmt": "0.67.0",
