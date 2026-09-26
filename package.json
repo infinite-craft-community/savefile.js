@@ -28,9 +28,9 @@
     "@gameroman/config": "0.3.0",
     "@savefile/fixtures": "0.0.1",
     "@types/bun": "1.4.2",
-    "oxfmt": "0.67.0",
-    "oxlint": "1.82.0",
-    "oxlint-tsgolint": "7.0.2001",
+    "oxfmt": "0.70.0",
+    "oxlint": "1.85.0",
+    "oxlint-tsgolint": "7.0.2003",
     "tsdown": "0.23.0",
     "typescript": "7.0.2"
   },
